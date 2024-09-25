@@ -1,0 +1,36 @@
+trigger:
+  branches:
+    include:
+      - main 
+
+resources:
+  pipelines:
+    - pipeline: backendPipeline
+      source: 'azure-pipelines-backend'
+      trigger:
+        branches:
+          include:
+            - main  
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  acrName: 'acrName' 
+  frontendAppName: 'frontendApp'
+  location: 'East US'
+  resourceGroupName: 'rg-core-0001'
+
+jobs:
+- job: BuildAndDeployFrontend
+  displayName: 'Build and Deploy Frontend'
+  steps:
+    - task: Docker@2
+      displayName: 'Build Docker Image for Frontend'
+      inputs:
+        command: 'buildAndPush'
+        containerRegistry: 'AzureContainerRegistry'
+        repository: 'frontend'
+        dockerfile: 'frontend/Dockerfile'
+        tags: |
+          latest
