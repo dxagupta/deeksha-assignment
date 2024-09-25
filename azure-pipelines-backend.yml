@@ -7,12 +7,12 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  acrName: 'acrName'  # Replace with your ACR name
-  appServicePlanName: 'appServicePlan'  # Replace with your App Service Plan name
-  backendAppName: 'backendApp'  # Replace with your backend app name
-  frontendAppName: 'frontendApp'  # Replace with your frontend app name
-  location: 'East US'  # Change as needed
-  resourceGroupName: 'rg-core-0001'  # Replace with your resource group name
+  acrName: 'acrName'
+  appServicePlanName: 'aspName'
+  backendAppName: 'backendApp'
+  frontendAppName: 'frontendApp'
+  location: 'East US'
+  resourceGroupName: 'rg-core-0001'
 
 jobs:
 - job: BuildAndDeployBackend
@@ -22,7 +22,7 @@ jobs:
       displayName: 'Build Docker Image for Backend'
       inputs:
         command: 'buildAndPush'
-        containerRegistry: 'AzureContainerRegistry'  # Name of your ACR service connection
+        containerRegistry: 'AzureContainerRegistry' 
         repository: 'backend'
         dockerfile: 'backend/Dockerfile'  # Path to your Dockerfile
         tags: |
