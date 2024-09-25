@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: deeksha-az.azurecr.io/backend:latest
+        image: dxa-az.azurecr.io/backend:latest
         ports:
         - containerPort: 8080
 
