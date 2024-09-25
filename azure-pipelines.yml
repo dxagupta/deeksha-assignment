@@ -1,0 +1,60 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  acrName: 'acrName'
+  appServicePlanName: 'aspName'
+  backendAppName: 'backendApp'
+  frontendAppName: 'frontendApp'
+  location: 'East US'
+  resourceGroupName: 'rg-core-0001'
+  AzureServiceConnection: 'deeksha-spn'
+
+jobs:
+- job: DeployInfrastructure
+  displayName: 'Deploy Infrastructure'
+  steps:
+    - task: AzureCLI@2
+      displayName: 'Deploy ARM Template'
+      inputs:
+        azureSubscription: $(AzureServiceConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az group create --name $(resourceGroupName) --location $(location) || echo "Resource group already exists"
+          az deployment group create --resource-group $(resourceGroupName) --template-file azure-deployment-template.json --parameters acrName=$(acrName) appServicePlanName=$(appServicePlanName) backendAppName=$(backendAppName) frontendAppName=$(frontendAppName)
+
+- job: TriggerBackend
+  displayName: 'Trigger Backend Pipeline'
+  dependsOn: DeployInfrastructure
+  steps:
+    - task: AzureDevOpsCLI@2
+      displayName: 'Trigger Backend Pipeline'
+      inputs:
+        azureSubscription: $(AzureServiceConnection)
+        command: 'pipeline run'
+        pipeline: 'azure-pipelines-backend'  # Name of your backend pipeline
+        parameters: |
+          acrName=$(acrName)
+          appServicePlanName=$(appServicePlanName)
+          backendAppName=$(backendAppName)
+          frontendAppName=$(frontendAppName)
+
+- job: TriggerFrontend
+  displayName: 'Trigger Frontend Pipeline'
+  dependsOn: TriggerBackend
+  steps:
+    - task: AzureDevOpsCLI@2
+      displayName: 'Trigger Frontend Pipeline'
+      inputs:
+        azureSubscription: $(AzureServiceConnection)  # Name of your service connection
+        command: 'pipeline run'
+        pipeline: 'azure-pipelines-frontend'  # Name of your frontend pipeline
+        parameters: |
+          acrName=$(acrName)
+          frontendAppName=$(frontendAppName)
