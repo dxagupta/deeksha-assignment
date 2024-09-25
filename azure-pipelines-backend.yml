@@ -1,0 +1,39 @@
+trigger:
+  branches:
+    include:
+      - main 
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  acrName: 'acrName'  # Replace with your ACR name
+  appServicePlanName: 'appServicePlan'  # Replace with your App Service Plan name
+  backendAppName: 'backendApp'  # Replace with your backend app name
+  frontendAppName: 'frontendApp'  # Replace with your frontend app name
+  location: 'East US'  # Change as needed
+  resourceGroupName: 'rg-core-0001'  # Replace with your resource group name
+
+jobs:
+- job: BuildAndDeployBackend
+  displayName: 'Build and Deploy Backend'
+  steps:
+    - task: Docker@2
+      displayName: 'Build Docker Image for Backend'
+      inputs:
+        command: 'buildAndPush'
+        containerRegistry: 'AzureContainerRegistry'  # Name of your ACR service connection
+        repository: 'backend'
+        dockerfile: 'backend/Dockerfile'  # Path to your Dockerfile
+        tags: |
+          latest
+
+    - task: AzureCLI@2
+      displayName: 'Deploy ARM Template'
+      inputs:
+        azureSubscription: 'AzureServiceConnection'  # Name of your service connection
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az group create --name $(resourceGroupName) --location $(location) || echo "Resource group already exists"
+          az deployment group create --resource-group $(resourceGroupName) --template-file azure-deployment-template.json --parameters acrName=$(acrName) appServicePlanName=$(appServicePlanName) backendAppName=$(backendAppName) frontendAppName=$(frontendAppName)
